@@ -38,7 +38,7 @@ use Test::Most;
     Session::State::Cookie
     Session::Store::Cookie/;
 
-  MyApp->config('Plugin::Session' => {secret_key => 'abc123'});
+  MyApp->config('Plugin::Session' => {storage_secret_key => 'abc123'});
   MyApp->setup;
 }
 

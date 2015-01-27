@@ -16,7 +16,8 @@ sub get_session_data {
   my ($self, $key) = @_;
   $self->_needs_early_session_finalization(1);
   my $cookie = $self->req->cookie($self->_store_cookie_name);
-  $self->{__cookie_session_store_cache__} = defined($cookie) ? $self->_secure_store->decode($cookie->value) : {};
+  $self->{__cookie_session_store_cache__} = defined($cookie) ? 
+    $self->_secure_store->decode($cookie->value) : {};
 
   return $self->{__cookie_session_store_cache__}->{$key};
 }
@@ -48,7 +49,8 @@ sub setup_session {
   $class->_store_cookie_expires($cfg->{storage_cookie_expires} || '+1d');
   $class->_secure_store(
     Session::Storage::Secure->new(
-      secret_key => $cfg->{secret_key},
+      secret_key => $cfg->{storage_secret_key} ||
+        die "storage_secret_key' configuration param for 'Catalyst::Plugin::Session::Store::Cookie' is missing!",
       sereal_encoder_options => { snappy => 1, stringify_unknown => 1 },
       sereal_decoder_options => { validate_utf8 => 1 }));
 
@@ -63,32 +65,51 @@ Catalyst::Plugin::Session::Store::Cookie - Store session data in the cookie
 
 =head1 SYNOPSIS
 
-    TBD
+    package MyApp;
+
+    use Catalyst qw/
+      Session
+      Session::State::Cookie
+      Session::Store::Cookie
+    /;
+
+    my %store_config = (
+      'Plugin::Session' => {
+        storage_cookie_name => ...,
+        storage_cookie_expires => ...,
+        storage_secret_key => ...,
+    );
+
+    __PACKAGE__->config('Plugin::Session::Store::Cookie' => \%store_config);
+    __PACKAGE__->setup;
 
 =head1 DESCRIPTION
 
 What's old is new again...
 
-Store session data in the client cookie.  Handy when you don't want to setup
-yet another storage system just for supporting sessions and authentication.
-Can be very fast since you avoid the overhead of requesting and deserializing
-session information from whatever you are using to store it.  Since Sessions
-in L<Catalyst> are global you can use this to reduce per request overhead.
+Store session data in the client cookie, like in 1995.  Handy when you don't
+want to setup yet another storage system just for supporting sessions and
+authentication. Can be very fast since you avoid the overhead of requesting and
+deserializing session information from whatever you are using to store it.
+Since Sessions in L<Catalyst> are global you can use this to reduce per request
+overhead.  On the other hand you may just use this for early prototying and
+then move onto something else for production.  I'm sure you'll do the right
+thing ;)
 
 The downsides are that you can really only count on about 4Kb of storage space
 on the cookie.  Also, that cookie data becomes part of every request so that
 will increase overhead on the request side of the network.  In other words a big
 cookie means more data over the wire (maybe you are paying by the byte...?)
 
+Also there are some questions as to the security of this approach.  We encrypt 
+information with L<Session::Storage::Secure> so you should review that and the
+notes that it includes.  Using this without SSL/HTTPS is not recommended.  Buyer
+beware.
+
 In any case if all you are putting in the session is a user id and a few basic
 things this will probably be totally fine and likely a lot more sane that using
-something non persistant like memcache.  On the other hand if you like to dump
-a bunch of stuff into the user session, this will likely not work out.  We
-do try to compress information when we store it, so you can get a lot into that
-4Kb if you find it wise...
-
-For security, we encrypt the compressed serialized information.  Please see the
-security section below.
+something non persistant like memcached.  On the other hand if you like to dump
+a bunch of stuff into the user session, this will likely not work out.
 
 B<NOTE> Since we need to store all the session info in the cookie, the session
 state will be set at ->finalize_headers stage (rather than at ->finalize_body
@@ -107,19 +128,28 @@ to be aware of it.
 =head1 CONFIGURATION
 
 This plugin supports the following configuration settings, which are stored as
-a hash ref under the configuration key 'Plugin::Session::Store::Cookie', for
-example:
+a hash ref under the configuration key 'Plugin::Session::Store::Cookie'.  See
+L</SYNOPSIS> for example.
 
-    package MyApp;
+=head2 storage_cookie_name
 
-    use Catalyst qw/
-      Session
-      Session::State::Cookie
-      Session::Store::Cookie
-    /;
+The name of the cookie that stores your session data on the client.  Defaults
+to '${$myapp}_sstore' (where $myappp is the lowercased version of your application
+subclass).  You may wish something less obvious.
 
-    __PACKAGE__->config('Plugin::Session::Store::Cookie' => \%store_config);
-    __PACKAGE__->setup;
+=head2 storage_cookie_expires
+
+How long before the cookie that is storing the session info expires.  defaults
+to '+1d'.  Lower is more secure but bigger hassle for your user.  You choose the
+right balance.
+
+=head2 storage_secret_key
+
+Used to fill the 'secret_key' initialization parameter for L<Session::Storage::Secure>.
+Don't let this be something you can guess or something that escapes into the
+wild...
+
+There is no default for this, you need to supply.
 
 =head1 AUTHOR
  
@@ -127,7 +157,7 @@ John Napiorkowski L<email:jjnapiork@cpan.org>
   
 =head1 SEE ALSO
  
-L<Catalyst>, L<Catalyst::Plugin::Session>
+L<Catalyst>, L<Catalyst::Plugin::Session>, L<Session::Storage::Secure>
 
 =head1 COPYRIGHT & LICENSE
  
