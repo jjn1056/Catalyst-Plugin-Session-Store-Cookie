@@ -16,26 +16,26 @@ sub get_session_data {
   my ($self, $key) = @_;
   $self->_needs_early_session_finalization(1);
   my $cookie = $self->req->cookie($self->_store_cookie_name);
-  $self->{__session} = defined($cookie) ? $self->_secure_store->decode($cookie->value) : {};
+  $self->{__cookie_session_store_cache__} = defined($cookie) ? $self->_secure_store->decode($cookie->value) : {};
 
-  return $self->{__session}->{$key};
+  return $self->{__cookie_session_store_cache__}->{$key};
 }
 
 sub store_session_data {
   my ($self, $key, $data) = @_;
 
-  $self->{__session} = +{
-    %{$self->{__session}},
+  $self->{__cookie_session_store_cache__} = +{
+    %{$self->{__cookie_session_store_cache__}},
     $key => $data};
 
   return $self->res->cookies->{$self->_store_cookie_name} = {
-    value => $self->_secure_store->encode($self->{__session}),
+    value => $self->_secure_store->encode($self->{__cookie_session_store_cache__}),
     expires => $self->_store_cookie_expires};
 }
 
 sub delete_session_data {
   my ($self, $key) = @_;
-  delete $self->{__session}->{$key};
+  delete $self->{__cookie_session_store_cache__}->{$key};
 }
 
 # Docs say 'this may be used in the future', like 10 years ago...
