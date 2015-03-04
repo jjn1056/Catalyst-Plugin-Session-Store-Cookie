@@ -1,4 +1,7 @@
 # This file documents the revision history for Perl extension Catalyst::Plugin::Session::Store::Cookie.
 
+0.002 - 2015-02-04
+  - slightly cleaner default cookie name
+
 0.001 - 2015-01-26
   - First Release 

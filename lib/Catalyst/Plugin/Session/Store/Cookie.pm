@@ -3,11 +3,12 @@ package Catalyst::Plugin::Session::Store::Cookie;
 use Moose;
 use Session::Storage::Secure;
 use MRO::Compat;
+use Catalyst::Utils;
 
 extends 'Catalyst::Plugin::Session::Store';
 with 'Catalyst::ClassData';
 
-our $VERSION = '0.001';
+our $VERSION = '0.002';
 
 __PACKAGE__->mk_classdata($_)
   for qw/_secure_store _store_cookie_name _store_cookie_expires/;
@@ -45,7 +46,7 @@ sub delete_expired_sessions { }
 sub setup_session {
   my $class = shift;
   my $cfg = $class->_session_plugin_config;
-  $class->_store_cookie_name($cfg->{storage_cookie_name} || lc($class).'_sstore');
+  $class->_store_cookie_name($cfg->{storage_cookie_name} || Catalyst::Utils::appprefix($class) . '_store');
   $class->_store_cookie_expires($cfg->{storage_cookie_expires} || '+1d');
   $class->_secure_store(
     Session::Storage::Secure->new(
