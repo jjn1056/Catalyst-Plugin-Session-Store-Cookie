@@ -8,7 +8,7 @@ use Catalyst::Utils;
 extends 'Catalyst::Plugin::Session::Store';
 with 'Catalyst::ClassData';
 
-our $VERSION = '0.002';
+our $VERSION = '0.003';
 
 __PACKAGE__->mk_classdata($_)
   for qw/_secure_store _store_cookie_name _store_cookie_expires/;
@@ -50,10 +50,12 @@ sub setup_session {
   $class->_store_cookie_expires($cfg->{storage_cookie_expires} || '+1d');
   $class->_secure_store(
     Session::Storage::Secure->new(
-      secret_key => $cfg->{storage_secret_key} ||
-        die "storage_secret_key' configuration param for 'Catalyst::Plugin::Session::Store::Cookie' is missing!",
-      sereal_encoder_options => { snappy => 1, stringify_unknown => 1 },
-      sereal_decoder_options => { validate_utf8 => 1 }));
+      secret_key => ($cfg->{storage_secret_key} ||
+        die "storage_secret_key' configuration param for 'Catalyst::Plugin::Session::Store::Cookie' is missing!"),
+      sereal_encoder_options => ($cfg->{sereal_encoder_options} || +{ snappy => 1, stringify_unknown => 1 }),
+      sereal_decoder_options => ($cfg->{sereal_decoder_options} || +{ validate_utf8 => 1 })
+    )
+  );
 
   return $class->maybe::next::method(@_);
 }
@@ -74,14 +76,15 @@ Catalyst::Plugin::Session::Store::Cookie - Store session data in the cookie
       Session::Store::Cookie
     /;
 
-    my %store_config = (
+    __PACKAGE__->config(
       'Plugin::Session' => {
         storage_cookie_name => ...,
         storage_cookie_expires => ...,
         storage_secret_key => ...,
+      },
+      ## More configuration
     );
 
-    __PACKAGE__->config('Plugin::Session::Store::Cookie' => \%store_config);
     __PACKAGE__->setup;
 
 =head1 DESCRIPTION
@@ -151,6 +154,18 @@ Don't let this be something you can guess or something that escapes into the
 wild...
 
 There is no default for this, you need to supply.
+
+=head2 sereal_decoder_options
+=head2 sereal_encoder_options
+
+This should be a hashref of options passed to init args of same name in
+L<Session::Storage::Secure>.  Defaults to:
+
+    sereal_encoder_options => +{ snappy => 1, stringify_unknown => 1 },
+    sereal_decoder_options => +{ validate_utf8 => 1 },
+
+Please note the default B<allows> object serealization.  You may wish to
+not allow this for production setups.
 
 =head1 AUTHOR
  
