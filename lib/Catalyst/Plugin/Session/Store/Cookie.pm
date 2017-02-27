@@ -4,6 +4,8 @@ use Moose;
 use Session::Storage::Secure;
 use MRO::Compat;
 use Catalyst::Utils;
+use Carp qw( croak );
+
 
 extends 'Catalyst::Plugin::Session::Store';
 with 'Catalyst::ClassData';
@@ -46,14 +48,18 @@ sub delete_expired_sessions { }
 sub setup_session {
   my $class = shift;
   my $cfg = $class->_session_plugin_config;
+  
+  # Sanity check: storage_secret_key is required
+  croak "->config->{storage_secret_key} must be set for $class\n" unless $cfg->{storage_secret_key};
+
   $class->_store_cookie_name($cfg->{storage_cookie_name} || Catalyst::Utils::appprefix($class) . '_store');
   $class->_store_cookie_expires($cfg->{storage_cookie_expires} || '+1d');
   $class->_secure_store(
     Session::Storage::Secure->new(
-      secret_key => ($cfg->{storage_secret_key} ||
-        die "storage_secret_key' configuration param for 'Catalyst::Plugin::Session::Store::Cookie' is missing!"),
-      sereal_encoder_options => ($cfg->{sereal_encoder_options} || +{ snappy => 1, stringify_unknown => 1 }),
-      sereal_decoder_options => ($cfg->{sereal_decoder_options} || +{ validate_utf8 => 1 })
+      Catalyst::Utils::merge_hashes(
+        { secret_key => $cfg->{storage_secret_key} },
+        $cfg->{storage_secure_opts}
+      )
     )
   );
 
@@ -80,7 +86,11 @@ Catalyst::Plugin::Session::Store::Cookie - Store session data in the cookie
       'Plugin::Session' => {
         storage_cookie_name => ...,
         storage_cookie_expires => ...,
-        storage_secret_key => ...,
+        storage_secret_key => ...,,
+        storage_secure_opts => {
+            old_key => [],
+            .....
+          }
       },
       ## More configuration
     );
@@ -155,17 +165,9 @@ wild...
 
 There is no default for this, you need to supply.
 
-=head2 sereal_decoder_options
-=head2 sereal_encoder_options
+=head2 storage_secure_opts
 
-This should be a hashref of options passed to init args of same name in
-L<Session::Storage::Secure>.  Defaults to:
-
-    sereal_encoder_options => +{ snappy => 1, stringify_unknown => 1 },
-    sereal_decoder_options => +{ validate_utf8 => 1 },
-
-Please note the default B<allows> object serealization.  You may wish to
-not allow this for production setups.
+Allows you to pass other Session::Storage::Secure options - they are merged with the other you might provide.
 
 =head1 AUTHOR
  
