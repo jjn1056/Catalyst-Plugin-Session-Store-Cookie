@@ -170,7 +170,7 @@ wild...
 
 There is no default for this, you need to supply.
 
-=item storage_cookie_secure
+=head2 storage_cookie_secure
 
 If this attribute B<set to 0> the cookie will not have the secure flag.
 
@@ -184,7 +184,7 @@ not good if you are mixing https and http in your application).
 
 Default value is 0.
 
-=item storage_cookie_httponly
+=head2 storage_cookie_httponly
 
 If this attribute B<set to 0>, the cookie will not have HTTPOnly flag.
 
@@ -201,7 +201,7 @@ that this cookie works only over HTTP and not over HTTPS.
 
 Note2: This parameter requires Catalyst::Runtime 5.80005 otherwise is skipped.
 
-=item storage_cookie_samesite
+=head2 storage_cookie_samesite
 
 This attribute configures the value of the
 L<SameSite|https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite>
@@ -222,6 +222,7 @@ Default value is C<Lax>. This is the default modern browsers use.
 Note: This parameter requires Catalyst::Runtime 5.90125 otherwise is skipped.
 
 =head2 sereal_decoder_options
+
 =head2 sereal_encoder_options
 
 This should be a hashref of options passed to init args of same name in
