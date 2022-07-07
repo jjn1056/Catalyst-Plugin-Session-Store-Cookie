@@ -1,5 +1,6 @@
 # This file documents the revision history for Perl extension Catalyst::Plugin::Session::Store::Cookie.
 
+{{$NEXT}}
   - Add storage_cookie_secure, storage_cookie_httponly and
     storage_cookie_samesite options
     with the same defaults as Catalyst::Plugin::Session::State::Cookie
