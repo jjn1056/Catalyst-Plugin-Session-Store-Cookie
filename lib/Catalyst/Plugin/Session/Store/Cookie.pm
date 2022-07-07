@@ -11,7 +11,8 @@ with 'Catalyst::ClassData';
 our $VERSION = '0.003';
 
 __PACKAGE__->mk_classdata($_)
-  for qw/_secure_store _store_cookie_name _store_cookie_expires/;
+  for qw/_secure_store _store_cookie_name _store_cookie_expires
+    _store_cookie_secure _store_cookie_httponly _store_cookie_samesite/;
 
 sub get_session_data {
   my ($self, $key) = @_;
@@ -30,9 +31,19 @@ sub store_session_data {
     %{$self->{__cookie_session_store_cache__}},
     $key => $data};
 
-  return $self->res->cookies->{$self->_store_cookie_name} = {
+  my $cookie = {
     value => $self->_secure_store->encode($self->{__cookie_session_store_cache__}),
-    expires => $self->_store_cookie_expires};
+    expires => $self->_store_cookie_expires,
+  };
+
+  # copied from Catalyst::Plugin::Session::State::Cookie
+  my $sec = $self->_store_cookie_secure;
+  $cookie->{secure} = 1 unless ( ($sec==0) || ($sec==2) );
+  $cookie->{secure} = 1 if ( ($sec==2) && $self->req->secure );
+  $cookie->{httponly} = $self->_store_cookie_httponly;
+  $cookie->{samesite} = $self->_store_cookie_samesite;
+
+  return $self->res->cookies->{$self->_store_cookie_name} = $cookie;
 }
 
 sub delete_session_data {
@@ -56,6 +67,9 @@ sub setup_session {
       sereal_decoder_options => ($cfg->{sereal_decoder_options} || +{ validate_utf8 => 1 })
     )
   );
+  $class->_store_cookie_secure($cfg->{storage_cookie_secure} || 0);
+  $class->_store_cookie_httponly($cfg->{storage_cookie_httponly} || 1);
+  $class->_store_cookie_samesite($cfg->{storage_cookie_samesite} || 'Lax');
 
   return $class->maybe::next::method(@_);
 }
@@ -81,6 +95,9 @@ Catalyst::Plugin::Session::Store::Cookie - Store session data in the cookie
         storage_cookie_name => ...,
         storage_cookie_expires => ...,
         storage_secret_key => ...,
+        storage_cookie_secure => ...,
+        storage_cookie_httponly => ...,
+        storage_cookie_samesite => ...,
       },
       ## More configuration
     );
@@ -154,6 +171,57 @@ Don't let this be something you can guess or something that escapes into the
 wild...
 
 There is no default for this, you need to supply.
+
+=item storage_cookie_secure
+
+If this attribute B<set to 0> the cookie will not have the secure flag.
+
+If this attribute B<set to 1> the cookie sent by the server to the client
+will get the secure flag that tells the browser to send this cookie back to
+the server only via HTTPS.
+
+If this attribute B<set to 2> then the cookie will get the secure flag only if
+the request that caused cookie generation was sent over https (this option is
+not good if you are mixing https and http in your application).
+
+Default value is 0.
+
+=item storage_cookie_httponly
+
+If this attribute B<set to 0>, the cookie will not have HTTPOnly flag.
+
+If this attribute B<set to 1>, the cookie will got HTTPOnly flag that should
+prevent client side Javascript accessing the cookie value - this makes some
+sort of session hijacking attacks significantly harder. Unfortunately not all
+browsers support this flag (MSIE 6 SP1+, Firefox 3.0.0.6+, Opera 9.5+); if
+a browser is not aware of HTTPOnly the flag will be ignored.
+
+Default value is 1.
+
+Note1: Many people are confused by the name "HTTPOnly" - it B<does not mean>
+that this cookie works only over HTTP and not over HTTPS.
+
+Note2: This parameter requires Catalyst::Runtime 5.80005 otherwise is skipped.
+
+=item storage_cookie_samesite
+
+This attribute configures the value of the
+L<SameSite|https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite>
+flag.
+
+If set to None, the cookie will be sent when making cross origin requests,
+including following links from other origins. This requires the
+L</cookie_secure> flag to be set.
+
+If set to Lax, the cookie will not be included when embedded in or fetched from
+other origins, but will be included when following cross origin links.
+
+If set to Strict, the cookie will not be included for any cross origin requests,
+including links from different origins.
+
+Default value is C<Lax>. This is the default modern browsers use.
+
+Note: This parameter requires Catalyst::Runtime 5.90125 otherwise is skipped.
 
 =head2 sereal_decoder_options
 =head2 sereal_encoder_options
