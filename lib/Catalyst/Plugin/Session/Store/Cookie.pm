@@ -18,7 +18,7 @@ sub get_session_data {
   my ($self, $key) = @_;
   $self->_needs_early_session_finalization(1);
   my $cookie = $self->req->cookie($self->_store_cookie_name);
-  $self->{__cookie_session_store_cache__} = defined($cookie) ? 
+  $self->{__cookie_session_store_cache__} = defined($cookie) ?
     $self->_secure_store->decode($cookie->value) : {};
 
   return $self->{__cookie_session_store_cache__}->{$key};
@@ -122,7 +122,7 @@ on the cookie.  Also, that cookie data becomes part of every request so that
 will increase overhead on the request side of the network.  In other words a big
 cookie means more data over the wire (maybe you are paying by the byte...?)
 
-Also there are some questions as to the security of this approach.  We encrypt 
+Also there are some questions as to the security of this approach.  We encrypt
 information with L<Session::Storage::Secure> so you should review that and the
 notes that it includes.  Using this without SSL/HTTPS is not recommended.  Buyer
 beware.
@@ -236,17 +236,17 @@ Please note the default B<allows> object serealization.  You may wish to
 not allow this for production setups.
 
 =head1 AUTHOR
- 
+
 John Napiorkowski L<email:jjnapiork@cpan.org>
-  
+
 =head1 SEE ALSO
- 
+
 L<Catalyst>, L<Catalyst::Plugin::Session>, L<Session::Storage::Secure>
 
 =head1 COPYRIGHT & LICENSE
- 
+
 Copyright 2015, John Napiorkowski L<email:jjnapiork@cpan.org>
- 
+
 This library is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 
