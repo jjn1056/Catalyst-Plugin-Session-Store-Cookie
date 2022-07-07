@@ -238,6 +238,7 @@ not allow this for production setups.
 =head1 AUTHOR
 
 John Napiorkowski L<email:jjnapiork@cpan.org>
+Alexander Hartmaier L<email:abraxxa@cpan.org>
 
 =head1 SEE ALSO
 
