@@ -1,9 +1,10 @@
 # This file documents the revision history for Perl extension Catalyst::Plugin::Session::Store::Cookie.
 
-{{$NEXT}}
+0.004 - 2021-08-21
   - Add storage_cookie_secure, storage_cookie_httponly and
     storage_cookie_samesite options
     with the same defaults as Catalyst::Plugin::Session::State::Cookie
+    (abraxxa++)
 
 0.003 - 2017-02-16
   - Fixed issue with setting Sereal arguments.

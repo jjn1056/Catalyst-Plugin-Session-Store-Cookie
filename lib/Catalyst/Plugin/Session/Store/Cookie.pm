@@ -8,6 +8,8 @@ use Catalyst::Utils;
 extends 'Catalyst::Plugin::Session::Store';
 with 'Catalyst::ClassData';
 
+our $VERSION = '0.004';
+
 __PACKAGE__->mk_classdata($_)
   for qw/_secure_store _store_cookie_name _store_cookie_expires
     _store_cookie_secure _store_cookie_httponly _store_cookie_samesite/;
