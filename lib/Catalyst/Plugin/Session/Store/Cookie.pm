@@ -17,11 +17,27 @@ __PACKAGE__->mk_classdata($_)
 sub get_session_data {
   my ($self, $key) = @_;
   $self->_needs_early_session_finalization(1);
+
+  return $self->{__cookie_session_store_cache__}->{$key} if
+    exists($self->{__cookie_session_store_cache__}) &&
+      exists($self->{__cookie_session_store_cache__}->{$key});
+
   my $cookie = $self->req->cookie($self->_store_cookie_name);
   $self->{__cookie_session_store_cache__} = defined($cookie) ?
-    $self->_secure_store->decode($cookie->value) : {};
+    $self->_decode_secure_store($cookie, $key) : +{};
 
   return $self->{__cookie_session_store_cache__}->{$key};
+}
+
+sub _decode_secure_store {
+  my ($self, $cookie, $key) = @_;
+  my $decoded = eval {
+    $self->_secure_store->decode($cookie->value);
+  } || do {
+    $self->log->error("Issue decoding cookie for key '$key': $@");
+    return +{};
+  };
+  return $decoded;
 }
 
 sub store_session_data {
