@@ -8,7 +8,7 @@ use Catalyst::Utils;
 extends 'Catalyst::Plugin::Session::Store';
 with 'Catalyst::ClassData';
 
-our $VERSION = '0.004';
+our $VERSION = '0.005';
 
 __PACKAGE__->mk_classdata($_)
   for qw/_secure_store _store_cookie_name _store_cookie_expires
@@ -18,6 +18,7 @@ sub get_session_data {
   my ($self, $key) = @_;
   $self->_needs_early_session_finalization(1);
 
+  # Don't decode if we've decoded this context already.
   return $self->{__cookie_session_store_cache__}->{$key} if
     exists($self->{__cookie_session_store_cache__}) &&
       exists($self->{__cookie_session_store_cache__}->{$key});
